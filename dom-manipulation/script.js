@@ -1,4 +1,4 @@
-const serverUrl = 'https://jsonplaceholder.typicode.com/posts'; // Simulated API endpoint
+const serverUrl = 'https://jsonplaceholder.typicode.com/posts';
 
 async function fetchQuotesFromServer() {
     try {
@@ -22,6 +22,7 @@ async function syncQuotes() {
     try {
         const serverQuotes = await fetchQuotesFromServer();
         resolveConflicts(serverQuotes);
+        showNotification('Quotes synced with server!');
     } catch (error) {
         console.error('Error syncing quotes with the server:', error);
     }
@@ -51,8 +52,18 @@ function resolveConflicts(serverQuotes) {
 
     if (isUpdated) {
         updateLocalStorageAndDOM();
-        showNotification('Data has been synced and conflicts resolved.');
     }
+}
+
+function showNotification(message) {
+    const notificationElement = document.createElement('div');
+    notificationElement.textContent = message;
+    notificationElement.className = 'notification';
+    document.body.appendChild(notificationElement);
+
+    setTimeout(() => {
+        notificationElement.remove();
+    }, 3000);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
