@@ -1,8 +1,16 @@
-let quotes = [
-    { text: "The only limit to our realization of tomorrow is our doubts of today.", category: "Motivation" },
-    { text: "Success is not final, failure is not fatal: It is the courage to continue that counts.", category: "Success" },
-    { text: "Believe you can and you're halfway there.", category: "Inspiration" }
-];
+
+let quotes = [];
+
+
+function loadQuotes() {
+    const storedQuotes = JSON.parse(localStorage.getItem('quotes') || '[]');
+    quotes = storedQuotes;
+}
+
+
+function saveQuotes() {
+    localStorage.setItem('quotes', JSON.stringify(quotes));
+}
 
 
 function showRandomQuote() {
@@ -14,19 +22,19 @@ function showRandomQuote() {
     const randomIndex = Math.floor(Math.random() * quotes.length);
     const randomQuote = quotes[randomIndex];
     quoteDisplay.innerHTML = `<p>"${randomQuote.text}"</p><p><em>Category: ${randomQuote.category}</em></p>`;
+
+
+    sessionStorage.setItem('lastViewedQuote', randomIndex);
 }
 
 
 function createAddQuoteForm() {
-   
     if (document.getElementById('addQuoteForm')) {
         return; 
     }
 
-
     const formContainer = document.createElement('div');
     formContainer.id = 'addQuoteForm';
-
 
     const quoteInput = document.createElement('input');
     quoteInput.id = 'newQuoteText';
@@ -40,15 +48,12 @@ function createAddQuoteForm() {
     categoryInput.placeholder = 'Enter quote category';
     formContainer.appendChild(categoryInput);
 
-
     const addButton = document.createElement('button');
     addButton.id = 'addQuoteBtn';
     addButton.textContent = 'Add Quote';
     formContainer.appendChild(addButton);
 
-
     document.body.appendChild(formContainer);
-
 
     addButton.addEventListener('click', addQuote);
 }
@@ -63,25 +68,71 @@ function addQuote() {
         return;
     }
 
-
     const newQuote = { text: quoteText, category: quoteCategory };
     quotes.push(newQuote);
-
+    saveQuotes();
 
     document.getElementById('newQuoteText').value = '';
     document.getElementById('newQuoteCategory').value = '';
 
-
     showRandomQuote();
-
     alert('Quote added successfully!');
 }
 
 
-document.getElementById('newQuote').addEventListener('click', showRandomQuote);
+function exportToJsonFile() {
+    const dataStr = JSON.stringify(quotes);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const downloadLink = document.createElement('a');
+    downloadLink.href = URL.createObjectURL(dataBlob);
+    downloadLink.download = 'quotes.json';
+    downloadLink.click();
+}
+
+
+function importFromJsonFile(event) {
+    const fileReader = new FileReader();
+    fileReader.onload = function(event) {
+        try {
+            const importedQuotes = JSON.parse(event.target.result);
+            quotes.push(...importedQuotes);
+            saveQuotes();
+            showRandomQuote();
+            alert('Quotes imported successfully!');
+        } catch (e) {
+            alert('Invalid JSON file.');
+        }
+    };
+    fileReader.readAsText(event.target.files[0]);
+}
 
 
 document.addEventListener('DOMContentLoaded', () => {
+    loadQuotes();
     createAddQuoteForm();
     showRandomQuote();
+
+
+    const lastViewedQuoteIndex = sessionStorage.getItem('lastViewedQuote');
+    if (lastViewedQuoteIndex !== null) {
+        const quoteDisplay = document.getElementById('quoteDisplay');
+        const lastQuote = quotes[Number(lastViewedQuoteIndex)];
+        if (lastQuote) {
+            quoteDisplay.innerHTML = `<p>"${lastQuote.text}"</p><p><em>Category: ${lastQuote.category}</em></p>`;
+        }
+    }
 });
+
+
+document.getElementById('newQuote').addEventListener('click', showRandomQuote);
+const importFileInput = document.createElement('input');
+importFileInput.type = 'file';
+importFileInput.id = 'importFile';
+importFileInput.accept = '.json';
+importFileInput.onchange = importFromJsonFile;
+document.body.appendChild(importFileInput);
+
+const exportButton = document.createElement('button');
+exportButton.textContent = 'Export Quotes';
+exportButton.onclick = exportToJsonFile;
+document.body.appendChild(exportButton);
