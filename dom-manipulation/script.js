@@ -1,7 +1,26 @@
-async function syncQuotes() {
+const serverUrl = 'https://jsonplaceholder.typicode.com/posts'; // Simulated API endpoint
+
+async function fetchQuotesFromServer() {
     try {
         const response = await fetch(serverUrl);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
         const serverQuotes = await response.json();
+        return serverQuotes.map(quote => ({
+            id: quote.id,
+            text: quote.body,
+            category: 'General'
+        }));
+    } catch (error) {
+        console.error('Error fetching quotes from the server:', error);
+        return [];
+    }
+}
+
+async function syncQuotes() {
+    try {
+        const serverQuotes = await fetchQuotesFromServer();
         resolveConflicts(serverQuotes);
     } catch (error) {
         console.error('Error syncing quotes with the server:', error);
@@ -60,6 +79,7 @@ async function addQuote() {
             });
 
             const savedQuote = await response.json();
+            savedQuote.category = newQuoteCategory;
             quotes.push(savedQuote);
             updateLocalStorageAndDOM();
 
